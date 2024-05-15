@@ -1,1 +1,0 @@
-# IVERTON-EMIQUISON-Projeto-quedalivre

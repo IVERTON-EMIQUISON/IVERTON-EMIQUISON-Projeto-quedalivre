@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resposta de Perguntas</title>
+</head>
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    color: #333;
+}
+
+form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.text-primary {
+    color: #007bff;
+}
+
+.text-primary:hover {
+    text-decoration: underline;
+}
+
+label {
+    margin-left: 5px;
+}
+
+input[type="radio"] {
+    margin-right: 5px;
+}
+
+</style>
+<body>
+    <h1>Responda as Perguntas</h1>
+    
+    <form id="respostasForm">
+        <div id="perguntas"></div>
+        <button type="submit">Enviar Respostas</button>
+    </form>
+        <a href="http://127.0.0.1:8000">
+            <button class=" nave_list_button">Sair</button>
+        </a>
+
+<script>
+        // Função para fazer a requisição GET para a API e exibir as perguntas
+        function carregarPerguntas() {
+            fetch('http://127.0.0.1:8000/api/perguntas/perguntas_com_alternativas/')
+                .then(response => response.json())
+                .then(data => exibirPerguntas(data))
+                .catch(error => console.error('Erro ao carregar perguntas:', error));
+        }
+
+        // Função para exibir as perguntas na tela
+        function exibirPerguntas(perguntas) {
+            const perguntasDiv = document.getElementById('perguntas');
+            perguntasDiv.innerHTML = '';
+
+            perguntas.forEach(pergunta => {
+                const perguntaDiv = document.createElement('div');
+                perguntaDiv.innerHTML = `<h3>${pergunta.texto}</h3>`;
+
+                pergunta.alternativas.forEach(alternativa => {
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = `pergunta_${pergunta.id}_resposta`;
+                    radio.value = alternativa.id;
+
+                    const label = document.createElement('label');
+                    label.textContent = `${alternativa.letra}) ${alternativa.texto}`;
+
+                    perguntaDiv.appendChild(radio);
+                    perguntaDiv.appendChild(label);
+                    perguntaDiv.appendChild(document.createElement('br'));
+                });
+
+                perguntasDiv.appendChild(perguntaDiv);
+            });
+        }
+
+        // Função para enviar as respostas
+        function enviarRespostas(event) {
+            event.preventDefault(); // Impede o envio do formulário
+
+            const respostas = [];
+            const perguntasDiv = document.getElementById('perguntas');
+
+            perguntasDiv.querySelectorAll('input[type=radio]:checked').forEach(input => {
+                const perguntaId = input.name.split('_')[1];  // Extrai o ID da pergunta do name do input
+                const alternativaId = parseInt(input.value);  // Extrai o ID da alternativa do value do input
+                respostas.push({ pergunta_id: perguntaId, alternativa_id: alternativaId });
+            });
+
+            // Envia as respostas para o backend
+            fetch('http://127.0.0.1:8000/api/respostas/criar_resposta/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(respostas)
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Respostas enviadas com sucesso');
+                } else {
+                    console.error('Erro ao enviar respostas:', response.statusText);
+                }
+            })
+            .catch(error => console.error('Erro ao enviar respostas:', error));
+        }
+        // Chamar a função para carregar as perguntas ao carregar a página
+        window.onload = carregarPerguntas;
+        document.getElementById('respostasForm').addEventListener('submit', enviarRespostas);
+    </script>
+</body>
+</html>

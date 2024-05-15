@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuário</title>
+</head>
+<style>
+/* Estilo para o formulário de registro */
+#registro-form {
+  width: 300px; /* largura do formulário */
+  margin: 0 auto; /* centralizar o formulário na página */
+  padding: 20px;
+  border: 1px solid #ccc; /* borda cinza */
+  border-radius: 5px; /* cantos arredondados */
+}
+
+/* Estilo para os rótulos */
+label {
+  display: block; /* coloca cada rótulo em uma nova linha */
+  margin-bottom: 5px; /* espaço entre cada rótulo */
+}
+
+/* Estilo para os inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%; /* os inputs ocupam toda a largura do formulário */
+  padding: 10px; /* espaço interno */
+  margin-bottom: 10px; /* espaço entre cada input */
+  border: 1px solid #ccc; /* borda cinza */
+  border-radius: 3px; /* cantos arredondados */
+  box-sizing: border-box; /* incluir padding e border na largura total */
+}
+
+/* Estilo para o botão */
+button[type="submit"] {
+  width: 100%; /* botão ocupa toda a largura do formulário */
+  padding: 10px; /* espaço interno */
+  background-color: #007bff; /* cor de fundo azul */
+  color: #fff; /* cor do texto branco */
+  border: none; /* remove a borda */
+  border-radius: 3px; /* cantos arredondados */
+  cursor: pointer; /* cursor ao passar por cima */
+}
+
+/* Estilo para o link de conexão */
+.text-primary {
+  color: #007bff; /* cor do texto azul */
+  text-decoration: none; /* remove sublinhado */
+}
+
+.text-primary:hover {
+  text-decoration: underline; /* sublinhado ao passar por cima */
+}
+
+
+</style>
+<body>
+    <h1>Registro de Usuário</h1>
+    <form id="registro-form">
+      <label for="username">Nome de Usuário:</label>
+      <input type="text" id="username" name="username" required><br><br>
+      <label for="email">E-mail:</label>
+      <input type="email" id="email" name="email" required><br><br>
+      <label for="password">Senha:</label>
+      <input type="password" id="password" name="password" required><br><br>
+      <label for="confirm_password">Confirmar Senha:</label>
+      <input type="password" id="confirm_password" name="confirm_password" required><br><br>
+      <button type="submit">Registrar</button>
+      <p>
+        Tem uma conta? <a href="{% url 'index' %}" class="text-primary">Conecte-se</a>
+    </p> 
+    </form>
+
+    <div id="message"></div>
+</body>
+</html>

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="../static/assets/css/simulador/style.css">
+  <meta charset="utf-8" />
+  <title>Queda Livre</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="../static/assets/css/simulador/reserte.css">
+  <link rel="stylesheet" href="../static/assets/css/simulador/styles.css">
+  <!-- <link rel="stylesheet" href="../static/assets/css/simulador/cabecalho.css"> -->
+</head>
+
+<style>
+  body{
+    overflow-x: hidden;
+}
+.cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px 11px 20px;
+    background-repeat: no-repeat;
+    text-align: center;
+    width: 100%;
+    height: 75px;
+    background-color: #ffffff;
+}
+
+.titulo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+}
+
+h1, h2 {
+    font-family: 'Open Sans', sans-serif;
+    margin: 0;
+    font-size: 2em;
+    text-shadow: 
+        #ffffff -2px -2px 1px, 
+        #000000 4px 4px 6px,
+        #ffffff 5px 4px 7px;
+    letter-spacing: 0em;
+}
+
+h2 {
+    font-size: 1.2rem;
+    margin-top: 10px;
+}
+
+.nave_button {
+    display: flex;
+    margin-right: 30px;
+}
+
+.nave_list_button {
+    background-color: #ffffff;
+    color: #000000;
+    border: none;
+    font-family: 'Roboto';
+    font-size: 18px;
+    padding: 5px 7px;
+    transition: 1s;
+    cursor: pointer;
+}
+.logo{
+    width: 60px;
+}
+.nave_list_button:hover{
+    color: darkorange;
+    transition: steps(1.2);
+}
+@media (max-width: 768px) {
+    .cabecalho {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .nave_button {
+        margin-right: 0;
+        margin-top: 10px;
+    }
+}
+</style>
+
+<body>
+  <div id="scatter-plot"></div>
+
+  <div id="meuModal">
+    <div class="modal-conteudo">
+      <p id="textoModal"></p>
+    </div>
+  </div>
+    <script>
+            
+    let input,input1,input2;
+    let latitude, altitude, altura;
+
+    function abrirModal() {
+        var modal = document.getElementById("myModal");
+        modal.style.display = "block";
+    }
+
+    // Adicione essa função para fechar o modal
+    function fecharModal() {
+        var modal = document.getElementById("myModal");
+        modal.style.display = "none";
+    }
+
+    function setup() { 
+        canvas = createCanvas(windowWidth, windowHeight );
+        abrirModal();
+        table = createElement("table");
+      let play = createImg("../static/assets/img/play.png");
+        play.addClass("button"); // Aplicando a classe "button" ao botão
+        play.position(windowWidth - 620, windowHeight - 230);
+        play.mouseClicked(chamarFuncoes);
+
+        entrada = createElement();
+        entrada.position(windowWidth - 665, windowHeight - 290); 
+
+        input = createInput();
+        input.position(windowWidth-665, windowHeight- 265);
+        input.attribute('placeholder', 'Digite a latitude em graus');
+
+        input1 = createInput();
+        input1.position(windowWidth-489, windowHeight- 265);
+        input1.attribute('placeholder', 'Digite a altitude em metros');
+
+        let limpa = createImg("../static/assets/img/limpa.png");
+        limpa.addClass("button")
+        limpa.position(windowWidth - 570, windowHeight - 230);
+        limpa.mouseClicked(limpar);
+
+        input2 = createInput();
+        input2.position(windowWidth-313, windowHeight- 265); 
+        input2.attribute('placeholder', 'Digite a altura do prédio');
+
+        let exporta = createImg("../static/assets/img/expotar.png");
+        exporta.addClass("button")
+        exporta.position(windowWidth - 520, windowHeight - 230);
+        exporta.mouseClicked(DownloadExcel);
+        
+        slider = createSlider(0, height, 0);
+        slider.position(windowWidth - 475, windowHeight - 220);
+
+    // valores mínimos, máximos e iniciais
+    } 
+    var entrada;
+    function validar() {
+      
+        latitude = input.value();
+        altitude = input1.value();
+        hmax = input2.value();
+      
+        if (latitude === null && latitude === " ") {
+            entrada.html("Digite um valor válido para a latitude.");
+            return;
+        } 
+        else if (isNaN(latitude)) { //Validar a entrada 
+            entrada.html("Digite um valor válido para a latitude.");
+            return;
+        }
+        
+        if (altitude === null && altitude === " ") {
+            entrada.html("Digite um valor válido para a altitude."); 
+            return;
+        } 
+        else if (isNaN(altitude)) { //Validar a entrada 
+            entrada.html("Digite um valor válido para a altitude.");
+            return;
+        }
+        
+        if (hmax === null && hmax === " ") {
+            entrada.html("Digite um valor válido para a altura do prédio.");
+            return;
+        }
+        
+        if (isNaN(hmax)) { //Validar a entrada 
+            entrada.html("Digite um valor válido para altura do prédio.");
+            return;
+        }
+        
+        constanteG =  calculateGravity(latitude,altitude);
+        
+        entrada.html('Aceleração da gravidade (g):' + constanteG.toFixed(4)+ " m/s²");
+      
+    }
+
+    function calculateGravity(latitude, altitude) {
+      
+        const g0 =  9.7803;
+        const radius = 6371000;
+        const latitudeInRadians = latitude * Math.PI / 180;
+        
+        const gLatitude = g0 * (1 + 0.0053024 * Math.pow(Math.sin(latitudeInRadians), 2));
+        const gAltitude = gLatitude * (1 - 2 * altitude / radius);
+        if(latitude > -90 &&  latitude < 90 && altitude != 0){
+          return gAltitude;
+        }else{
+        entrada.html("Preencha os campos corretamente da latitude entre -90 a 90 e altitude é entre 1 a 8.848 metros.");
+        }
+
+    }
+    </script>
+    <script>
+      let start = 0;
+      let objeto = false;
+      let pausado = false;
+      let velocidade_final, velocidade_inicial = 0;//velocidade
+      let distancia = 0;//distância
+      let tempo = 0; //tempo
+      let tabela = [];
+      let aux = 0;
+      let constanteG;
+
+      let hmax; // altura do canvas
+      let alturamin, tmax; // altura mínima do canvas, 
+      let alturamax;
+      let y, yc, yo;
+      let vo = 0; // velocidade inicial
+      let y0 = 0;
+
+      function preload() {
+        imag1 = loadImage("../static/assets/img/fundo23.png");
+        imag = loadImage("../static/assets/img/predio1.png");
+        base = loadImage("../static/assets/img/base.png");
+        pause = loadImage("../static/assets/img/pausa.png");
+        play = loadImage("../static/assets/img/play.png");
+        limpa = loadImage("../static/assets/img/limpa.png");
+        exporta = loadImage("../static/assets/img/expotar.png");
+      }
+
+      let globalTableData = [];
+      function preenncher_tabela() {
+        let rowData = [tempo.toFixed(3), y.toFixed(3), velocidade_final.toFixed(3)];
+        globalTableData.push(rowData); //Update do array
+      }
+
+
+      function draw() {
+        background(imag1);
+
+        let imgaltura = slider.value();
+
+        if (imgaltura >= 550) {
+          imgaltura = slider.value(480);
+        }
+        image(imag, 20, imgaltura - 1, 254, windowHeight - 0.9);
+        image(base, 102, windowHeight - 185, 91);
+
+        if (objeto) {
+
+          if (!pausado)
+            // tmax = millis();
+            end = millis();
+          tempo = (end - start) / 1000;
+
+          tmax = Math.sqrt(2 * hmax) / constanteG; // Mesma fórmula que tempomax
+          tempo = tempo + tmax / 10;
+
+          frameRate(15);
+
+          alturamin = 0;//valores da tela em pixel
+          alturamax = height;//valores da tela em pixel
+
+          y = y0 + velocidade_inicial + 0.5 * constanteG * tempo ** 2;
+          yc = alturamin + y * (alturamax - alturamin) / hmax;
+
+          velocidade_final = constanteG * tempo; // velocidade 
+
+          let posicao_Desejada = 707;
+
+          if (yc + slider.value() + 25 >= posicao_Desejada) {
+            objeto = false; // Para parar a simulação do objeto
+
+          } else {
+            ellipse(202, yc + slider.value() + 25, 12, 12);
+          }
+
+          if (yc > height) {
+            objeto = false;
+          }
+
+          // adiciona os dados da simulação ao array da tabela
+          if (frameCount % 5 == 0 && !pausado) {
+            tabela.push([tempo.toFixed(3), y.toFixed(3), velocidade_final.toFixed(3)]);
+            preenncher_tabela();
+          }
+        }
+
+        // desenha a tabela
+        textSize(16);
+        // Definindo posições x para cada coluna
+        let xTempo = 280;
+        let xDistancia = 420;
+        let xVelocidade = 575;
+
+        // Desenhando os títulos
+        text("Tempo (m/s)", xTempo, 40);
+        text("Distância (m)", xDistancia, 40);
+        text("Velocidade (m/s)", xVelocidade, 40);
+
+        let espacamento = 30;
+
+        for (let i = 0; i < tabela.length; i++) {
+          let linha = tabela[i];
+          let posY = 60 + i * espacamento; // começando de 60 para deixar um espaço após o título
+          // Desenhando os elementos da tabela nas respectivas colunas
+          text(linha[0], xTempo, posY);
+          text(linha[1], xDistancia, posY);
+          text(linha[2], xVelocidade, posY);
+        }
+        // desenharLinhaVerticalComAltura();
+      }
+
+      function DownloadExcel() {
+        function exportToCSV(tableData, filename) {
+          let csvContent = "data:text/csv;charset=utf-8,";
+          
+          // Adiciona a linha com o valor de g
+         // csvContent += "\rg = " + constanteG + "\n";
+          // Adiciona a linha com os cabeçalhos
+          csvContent += "t y v\r\n";
+
+          // Função para formatar números com vírgula e espaços
+          function formatNumber(num) {
+            return num.toString().replace(".", ".");
+          }
+
+          // Cria as linhas do arquivo CSV
+          tableData.forEach(row => {
+            let csvRow = row.map(cell => {
+              // Verifica se o valor é um número e formata com vírgula e espaços
+              if (!isNaN(cell)) {
+                return formatNumber(cell);
+              }
+              return cell;
+            }).join("\t");
+
+            csvContent += csvRow + "\r\n";
+          });
+
+          // Cria o link de download e o adiciona à página
+          let encodedUri = encodeURI(csvContent);
+          let link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", filename);
+          document.body.appendChild(link);
+
+          // Aciona o clique do link para iniciar o download
+          link.click();
+
+          // Remove o link da página
+          document.body.removeChild(link);
+        }
+        const filename = "dados.csv"; // Alteração para o formato .csv
+
+        exportToCSV(globalTableData, filename);
+      }
+
+      function limpar() {
+        let rows = table.elt.getElementsByTagName("tr"); // Seleciona todas as linhas da tabela
+        for (let i = rows.length - 1; i > 0; i--) { // Percorre as linhas, exceto a primeira, e as remove
+          table.elt.removeChild(rows[i]);
+        }
+
+        // Remove todos os dados do array da tabela
+        tabela = [];
+        globalTableData = [];
+        objeto = false;
+        pausado = false
+
+      }
+
+      function alternarQueda() {
+        if (!objeto) {
+          objeto = true;
+          start = millis();
+        }
+      }
+
+      function chamarFuncoes() {
+        validar();
+
+        if ((latitude >= -90 && latitude <= 90) || (altitude >= 0 && altitude <= 8.800)) {
+
+          if (objeto == false || pausado != pausado) {
+            limpar();
+
+          }
+          if (Stop() == pausado) {
+            Stop();
+          }
+          alternarQueda();
+        }
+      }
+
+      function Stop() {
+        if (!objeto) {
+
+        } else {
+          pausado = !pausado;
+          if (!pausado) {
+            start = millis() - 1000 * tempo;
+          } else {
+            tabela.push([tempo.toFixed(3), y.toFixed(3), velocidade_final.toFixed(3)]);
+            preenncher_tabela();
+          }
+        }
+      }
+    </script>
+   <!-- <img src="../static/assets/img/"> -->
+    <header class="cabecalho">
+      <!-- <img src="../static/assets/ufersa.png" class="logo"> -->
+      <div class="titulo">
+        <h1> Laboratório virtual de Fisíca</h1>
+        <h2>Simulador de Queda Livre</h2>
+      </div>
+    
+      <div class="nave_button">
+
+        <div class="nav_button">
+          <a href="https://docs.google.com/forms/d/12PUF3jMdkmhNbPaDng6j8gE8DEZm4LcIQcsT5qf_Y2E/edit">
+            <button class="nave_list_button">Submeter-Dados</button>
+          </a>
+        </div>
+
+        <a href="./index_quest.html">
+          <button class="nave_list_button" onclick="openQuiz()">Questionários</button>
+        </a>
+
+        <a href="{% url 'index' %}">
+          <button class=" nave_list_button">Sair</button>
+        </a>
+      </div>
+
+    </header>
+
+    <div id="myModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="fecharModal()">&times;</span>
+        <div class="texto">
+
+          <p>
+          <h1> Bem-vindo ao Simulador de Queda Livre! </h1><br><br>
+          A queda livre é um conceito fundamental na física, descrevendo o movimento de um objeto sob a influência
+          exclusiva da gravidade. Este simulador foi desenvolvido com o propósito de proporcionar uma compreensão visual
+          e prática desse fenômeno essencial.
+          <br><br>
+          <h3>Funcionalidade</h3><br>
+          Os usuários podem inserir as coordenadas como latitude e altitude locais, além da altura inicial de onde o
+          objeto será solto. Essas informações são cruciais para calcular a aceleração da gravidade específica daquele
+          local, garantindo uma simulação precisa.
+
+          </p>
+        </div>
+      </div>
+    </div>
+    <script>
+      function openQuiz() {
+        var quizContainer = document.getElementById('quizContainer');
+        quizContainer.style.display = 'block';
+      }
+    </script>
+</body>
+
+</html>
